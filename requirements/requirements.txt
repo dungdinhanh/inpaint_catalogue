@@ -8,3 +8,5 @@ torchvision
 transformers==4.28.0
 huggingface-hub==0.23.4
 pytorch-lightning==2.5.1
+omegaconf
+webdataset
