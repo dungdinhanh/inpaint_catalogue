@@ -44,8 +44,11 @@ class CatalogueDataset(IterableDataset):
         # tokenizer=None,
         resolution=512,
         scheme_ratio=0.5,
+        name="HL50M",
+        **kwargs,
     ):
         super().__init__()
+        self.name = name
         self.image_root = image_root
         self.segmentation_root = segmentation_root
         self.resolution = resolution
@@ -53,7 +56,7 @@ class CatalogueDataset(IterableDataset):
         self.tokenizer = pipeline.tokenizer 
         self.task_prompt = task_prompt
         self.transforms = transforms # this one is used in laion but not in open image/ let's switch later to see if it can help improvement or not
-
+        self.pipeline = pipeline
         self.image_paths = self._read_list_file(list_file)
         self.mask_gen_a = RandomRectangleMaskWithSegmGenerator() # may be switch to random mask root if necessary
         self.mask_gen_b = RandomRectangleMaskWithSegmOverlapGenerator() # may switch to random mask root if necessary
@@ -73,8 +76,9 @@ class CatalogueDataset(IterableDataset):
             except Exception:
                 continue
 
-            seg = (np.array(seg_image) > 0).astype(np.float32)
-
+            seg = (np.array(seg_image) > 0).astype(np.float32) # becare full here
+            # seg = torch.from_numpy(seg).to(self.pipeline.device)
+            seg = torch.from_numpy(seg).type(torch.float16).to(self.pipeline.device)
             if random.random() < self.scheme_ratio:
                 gen_mask, _ = self.mask_gen_a(seg)
             else:

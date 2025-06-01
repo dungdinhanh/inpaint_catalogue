@@ -252,7 +252,7 @@ class RandomRectangleMaskWithSegmGenerator:
         self.max_times = max_times
         self.ramp = LinearRamp(**ramp_kwargs) if ramp_kwargs is not None else None
 
-    def __call__(self, seg, iter_i=None, raw_image=None, device="cpu"):
+    def __call__(self, seg, iter_i=None, raw_image=None):
         coef = self.ramp(iter_i) if (self.ramp is not None) and (iter_i is not None) else 1
         cur_bbox_max_size = int(self.bbox_min_size + 1 + (self.bbox_max_size - self.bbox_min_size) * coef)
         cur_max_times = int(self.min_times + (self.max_times - self.min_times) * coef)
@@ -265,17 +265,8 @@ class RandomRectangleMaskWithSegmGenerator:
         gen_success = []
         # seg.to(device)
         for i in range(times):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-            else:
-                bbox_min_size = self.bbox_min_size
-            box_width = np.random.randint(bbox_min_size, bbox_max_size)
-            box_height = np.random.randint(bbox_min_size, bbox_max_size)
-
+            box_width = np.random.randint(self.bbox_min_size, bbox_max_size)
+            box_height = np.random.randint(self.bbox_min_size, bbox_max_size)
 
             # Perform convolution to figure out viable background locations for placing masks
             filter_width = box_width
@@ -316,16 +307,8 @@ class RandomRectangleMaskWithSegmGenerator:
         if len(gen_success) == 0:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-            else:
-                bbox_min_size = self.bbox_min_size
-            box_width = np.random.randint(bbox_min_size, bbox_max_size)
-            box_height = np.random.randint(bbox_min_size, bbox_max_size)
+            box_width = np.random.randint(self.bbox_min_size, bbox_max_size)
+            box_height = np.random.randint(self.bbox_min_size, bbox_max_size)
             start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
             start_y = np.random.randint(self.margin, height - self.margin - box_height + 1)
             mask[start_y:start_y + box_height, start_x:start_x + box_width] = 1
@@ -358,16 +341,8 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         gen_success = []
         # print(times)
         for i in range(times):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-                    
-                bbox_min_size = bbox_max_size/2
-            else:
-                bbox_min_size = self.bbox_min_size
-            box_width = np.random.randint(bbox_min_size, bbox_max_size)
-            box_height = np.random.randint(bbox_min_size, bbox_max_size)
+            box_width = np.random.randint(self.bbox_min_size, bbox_max_size)
+            box_height = np.random.randint(self.bbox_min_size, bbox_max_size)
 
             # Perform convolution to figure out viable background locations for placing masks
             filter_width = box_width
@@ -413,16 +388,8 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         if len(gen_success) == 0:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-            else:
-                bbox_min_size = self.bbox_min_size
-            box_width = np.random.randint(bbox_min_size, bbox_max_size)
-            box_height = np.random.randint(bbox_min_size, bbox_max_size)
+            box_width = np.random.randint(self.bbox_min_size, bbox_max_size)
+            box_height = np.random.randint(self.bbox_min_size, bbox_max_size)
             start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
             start_y = np.random.randint(self.margin, height - self.margin - box_height + 1)
             mask[start_y:start_y + box_height, start_x:start_x + box_width] = 1

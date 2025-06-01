@@ -37,6 +37,7 @@ from PIL import Image
 from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import PretrainedConfig
+import torch.multiprocessing as mp
 
 import diffusers
 import powerpaint.datasets
@@ -641,6 +642,7 @@ def main():
         variant=args.variant,
         local_files_only=True,  # load files from local cache
     )
+    
 
     # IMPORTANT: add learnable tokens for task prompts into tokenizer
     placeholder_tokens = [v.placeholder_tokens for k, v in args.task_prompt.items()]
@@ -666,7 +668,6 @@ def main():
             args.pretrained_model_name_or_path, subfolder="unet", revision=args.revision, variant=args.variant
         )
         ema_unet = EMAModel(ema_unet.parameters(), model_cls=UNet2DConditionModel, model_config=ema_unet.config)
-
     if args.enable_xformers_memory_efficient_attention:
         if is_xformers_available():
             import xformers
@@ -716,7 +717,7 @@ def main():
 
         accelerator.register_save_state_pre_hook(save_model_hook)
         accelerator.register_load_state_pre_hook(load_model_hook)
-
+    
     if args.gradient_checkpointing:
         unet.train()
         text_encoder.gradient_checkpointing_enable()
@@ -770,19 +771,19 @@ def main():
         dataset_class = getattr(powerpaint.datasets, d.dataset_class)
         dataset_ = dataset_class(train_transforms, pipe, args.task_prompt, **d)
         datasets_list.append({"dataset": dataset_, "prob": d.prob})
-
+    
     train_dataset = ProbPickingDataset(datasets_list)
-
+ 
     with accelerator.main_process_first():
         if args.max_train_samples is not None:
             train_dataset = train_dataset.shuffle(seed=args.seed).select(range(args.max_train_samples))
-
+    
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
         batch_size=args.train_batch_size,
         num_workers=args.dataloader_num_workers,
     )
-
+   
     # Scheduler and math around the number of training steps.
     overrode_max_train_steps = False
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
@@ -828,7 +829,7 @@ def main():
             tracker_config.pop(k)
 
         accelerator.init_trackers(args.tracker_project_name, tracker_config)
-
+    
     # Train!
     total_batch_size = args.train_batch_size * accelerator.num_processes * args.gradient_accumulation_steps
     logger.info(f"***** Running training for {args.tracker_project_name} *****")
@@ -1058,4 +1059,5 @@ def main():
 
 
 if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
     main()
