@@ -6,7 +6,7 @@ import torch
 from torch.utils.data import IterableDataset
 from torchvision import transforms
 import cv2
-from powerpaint.datasets.masks_seg import RandomRectangleMaskWithSegmGenerator, RandomRectangleMaskWithSegmOverlapGenerator
+from powerpaint.datasets.mask_generator.masks_seg import RandomRectangleMaskWithSegmGenerator, RandomRectangleMaskWithSegmOverlapGenerator
 
 def augment_images(image, mask, resolution):
     mask = Image.fromarray((mask.squeeze(0) * 255).astype("uint8")).convert("L")

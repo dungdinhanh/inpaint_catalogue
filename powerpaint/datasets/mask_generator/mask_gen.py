@@ -18,7 +18,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 
 from powerpaint.datasets.mask_generator.masks_seg import *
-from powerpaint.datasets.catalogue import *
+# from powerpaint.datasets.catalogue import *
 from PIL import Image, ImageFile
 import numpy as np
 import random
@@ -79,6 +79,15 @@ class MaskGenerateDataset(Dataset):
         self.mask_gen_a = RandomRectangleMaskWithSegmGenerator()
         self.mask_gen_b = RandomRectangleMaskWithSegmOverlapGenerator()
         self.device = device
+        self.img_error_file = os.path.join(mask_dir, "failure_img.txt")
+        self.seg_error_file = os.path.join(mask_dir, "failure_seg.txt")
+        f = open(self.img_error_file, "w")
+        f.write("")
+        f.close()
+
+        f = open(self.seg_error_file, "w")
+        f.write("")
+        f.close()
 
 
     def __len__(self):
@@ -98,13 +107,20 @@ class MaskGenerateDataset(Dataset):
             print(f"Warning: could not open image {img_path}")
             print(f"Initialize image with all ones")
             image =  np.ones((128, 128, 3))  # or handle as needed
+            f = open(self.img_error_file, "a")
+            f.write(f"{img_path}\n")
+            f.close()
+
         
         try:
             seg_image = Image.open(seg_path).convert("L")
-        except OSError:
+        except OSError as e:
             print(f"Warning: could not open {seg_path}")
             print(f"Warning: Initialize segmentation as null")
-            seg_image = np.ones_like(np.array(image.shape[:2])) * 100.0
+            seg_image = np.ones_like(np.array(image)[:, :, 0]) * 100.0
+            f = open(self.seg_error_file, "a")
+            f.write(f"{seg_path}\n")
+            f.close()
 
         seg = (np.array(seg_image) < 50).astype(np.float32) # becare full here
         # seg = torch.from_numpy(seg).to(self.pipeline.device)
@@ -159,7 +175,8 @@ def run(rank, world_size):
 
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=False)
     dataloader = DataLoader(dataset, batch_size=1000, shuffle=False, sampler=sampler)
-
+    print(f"Rank {rank} on device {torch.cuda.current_device()} gets {len(sampler)} samples")
+    # exit(0)
     for image in dataloader:
         pass  # All saving happens in __getitem__, so we just iterate
 
