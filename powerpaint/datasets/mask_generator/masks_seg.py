@@ -244,7 +244,7 @@ class RandomRectangleMaskFromDistGenerator:
         return mask[None, ...], True
 
 class RandomRectangleMaskWithSegmGenerator:
-    def __init__(self, margin=10, bbox_min_size=30, bbox_max_size=100, min_times=0, max_times=3, ramp_kwargs=None):
+    def __init__(self, margin=5, bbox_min_size=30, bbox_max_size=100, min_times=0, max_times=3, ramp_kwargs=None):
         self.margin = margin
         self.bbox_min_size = bbox_min_size
         self.bbox_max_size = bbox_max_size
@@ -266,7 +266,6 @@ class RandomRectangleMaskWithSegmGenerator:
         # seg.to(device)
         for i in range(times):
             if self.bbox_min_size >= bbox_max_size:
-                print(seg.device)
                 if bbox_max_size < 10:
                     print("Weird, please check again the path")
                     print(raw_image)
@@ -277,6 +276,10 @@ class RandomRectangleMaskWithSegmGenerator:
                 
             else:
                 bbox_min_size = self.bbox_min_size
+            if bbox_min_size >= bbox_max_size:
+                print(raw_image)
+                print(f"min: {bbox_min_size}")
+                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
 
@@ -321,7 +324,6 @@ class RandomRectangleMaskWithSegmGenerator:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
             if self.bbox_min_size >= bbox_max_size:
-                print(seg.device)
                 if bbox_max_size < 10:
                     print("Weird, please check again the path")
                     print(raw_image)
@@ -332,6 +334,10 @@ class RandomRectangleMaskWithSegmGenerator:
                 
             else:
                 bbox_min_size = self.bbox_min_size
+            if bbox_min_size >= bbox_max_size:
+                print(raw_image)
+                print(f"min: {bbox_min_size}")
+                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
             start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
@@ -341,7 +347,7 @@ class RandomRectangleMaskWithSegmGenerator:
         return mask[None, ...], np.any(np.asarray(gen_success))
 
 class RandomRectangleMaskWithSegmOverlapGenerator:
-    def __init__(self, margin=10, bbox_min_size=30, bbox_max_size=100, min_times=0, max_times=3, overlap_min=0.3, overlap_max=0.6, ramp_kwargs=None):
+    def __init__(self, margin=5, bbox_min_size=30, bbox_max_size=100, min_times=0, max_times=3, overlap_min=0.3, overlap_max=0.6, ramp_kwargs=None):
         self.margin = margin
         self.bbox_min_size = bbox_min_size
         self.bbox_max_size = bbox_max_size
@@ -367,7 +373,6 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         # print(times)
         for i in range(times):
             if self.bbox_min_size >= bbox_max_size:
-                print(seg.device)
                 if bbox_max_size < 10:
                     print("Weird, please check again the path")
                     print(raw_image)
@@ -379,6 +384,10 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
                 
             else:
                 bbox_min_size = self.bbox_min_size
+            if bbox_min_size >= bbox_max_size:
+                print(raw_image)
+                print(f"min: {bbox_min_size}")
+                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
 
@@ -426,8 +435,6 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         if len(gen_success) == 0:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
-            print(seg.device)
-            print("generate again__")
             if self.bbox_min_size >= bbox_max_size:
                 if bbox_max_size < 10:
                     print("Weird, please check again the path")
@@ -439,6 +446,10 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
                 
             else:
                 bbox_min_size = self.bbox_min_size
+            if bbox_min_size >= bbox_max_size:
+                print(raw_image)
+                print(f"min: {bbox_min_size}")
+                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
             start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
