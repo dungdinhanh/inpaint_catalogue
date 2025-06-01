@@ -8,6 +8,9 @@ output
 .venv/
 mlruns/
 data/
+*.egg-info/
+.vscode/
+
 
 
 **/__pycache__/
