@@ -260,6 +260,16 @@ class RandomRectangleMaskWithSegmGenerator:
         height, width = seg.shape
         mask = np.zeros((height, width), np.float32)
         bbox_max_size = min(cur_bbox_max_size, height - self.margin * 2, width - self.margin * 2)
+        if bbox_max_size <= 0:
+            if height <= self.margin*2:
+                h_margin = 0
+            else:
+                h_margin = self.margin
+            if width <= self.margin * 2:
+                w_margin = 0
+            else:
+                w_margin = self.margin * 2
+            bbox_max_size = min(cur_bbox_max_size, height - h_margin * 2, width - w_margin * 2)
 
         times = np.random.randint(self.min_times, cur_max_times + 1)
         gen_success = []
@@ -365,6 +375,16 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         height, width = seg.shape
         mask = np.zeros((height, width), np.float32)
         bbox_max_size = min(cur_bbox_max_size, height - self.margin * 2, width - self.margin * 2)
+        if bbox_max_size <= 0:
+            if height <= self.margin*2:
+                h_margin = 0
+            else:
+                h_margin = self.margin
+            if width <= self.margin * 2:
+                w_margin = 0
+            else:
+                w_margin = self.margin * 2
+            bbox_max_size = min(cur_bbox_max_size, height - h_margin * 2, width - w_margin * 2)
 
         seg = 1.0 - seg # Flip background and foreground
 

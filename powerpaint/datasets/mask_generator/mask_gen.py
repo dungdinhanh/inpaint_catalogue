@@ -177,7 +177,13 @@ def run(rank, world_size):
     dataloader = DataLoader(dataset, batch_size=1000, shuffle=False, sampler=sampler)
     print(f"Rank {rank} on device {torch.cuda.current_device()} gets {len(sampler)} samples")
     # exit(0)
+    count = 0
     for image in dataloader:
+        if rank == 0:
+            if count % 5000 == 0:
+                print(f"Complete {count} over {len(sampler)}")
+        dist.barrier()
+        count += 1
         pass  # All saving happens in __getitem__, so we just iterate
 
     cleanup()
