@@ -39,6 +39,7 @@ def calculate_padding(image_size, kernel_size, stride=1):
 
 def pad_image_with_filter_size(img, filter_size):
     padding_left, padding_right, padding_top, padding_bottom = calculate_padding(np.asarray(img.shape), filter_size)
+    
     return F.pad(img, [padding_left, padding_right, padding_top, padding_bottom])
 
 def convolve_image_with_box(img, filter_size):
@@ -268,28 +269,31 @@ class RandomRectangleMaskWithSegmGenerator:
             if width <= self.margin * 2:
                 w_margin = 0
             else:
-                w_margin = self.margin * 2
+                w_margin = self.margin
             bbox_max_size = min(cur_bbox_max_size, height - h_margin * 2, width - w_margin * 2)
+        else:
+            h_margin = self.margin
+            w_margin = self.margin
 
         times = np.random.randint(self.min_times, cur_max_times + 1)
         gen_success = []
         # seg.to(device)
-        for i in range(times):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-                print(f"bbox min size: {bbox_min_size}")
-                print(f"bbox max size: {bbox_max_size}")
-                
-            else:
-                bbox_min_size = self.bbox_min_size
-            if bbox_min_size >= bbox_max_size:
+        if self.bbox_min_size >= bbox_max_size:
+            if bbox_max_size < 10:
+                print("Weird, please check again the path")
                 print(raw_image)
-                print(f"min: {bbox_min_size}")
-                print(f"max: {bbox_max_size}")
+
+            bbox_min_size = bbox_max_size/2
+            print(f"bbox min size: {bbox_min_size}")
+            print(f"bbox max size: {bbox_max_size}")
+            
+        else:
+            bbox_min_size = self.bbox_min_size
+        if bbox_min_size >= bbox_max_size:
+            print(raw_image)
+            print(f"min: {bbox_min_size}")
+            print(f"max: {bbox_max_size}")
+        for i in range(times):
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
 
@@ -333,25 +337,10 @@ class RandomRectangleMaskWithSegmGenerator:
         if len(gen_success) == 0:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-                print(f"bbox min size: {bbox_min_size}")
-                print(f"bbox max size: {bbox_max_size}")
-                
-            else:
-                bbox_min_size = self.bbox_min_size
-            if bbox_min_size >= bbox_max_size:
-                print(raw_image)
-                print(f"min: {bbox_min_size}")
-                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
-            start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
-            start_y = np.random.randint(self.margin, height - self.margin - box_height + 1)
+            start_x = np.random.randint(w_margin, width - w_margin - box_width + 1)
+            start_y = np.random.randint(h_margin, height - h_margin - box_height + 1)
             mask[start_y:start_y + box_height, start_x:start_x + box_width] = 1
 
         return mask[None, ...], np.any(np.asarray(gen_success))
@@ -383,31 +372,36 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
             if width <= self.margin * 2:
                 w_margin = 0
             else:
-                w_margin = self.margin * 2
+                w_margin = self.margin 
             bbox_max_size = min(cur_bbox_max_size, height - h_margin * 2, width - w_margin * 2)
+        else:
+            h_margin = self.margin
+            w_margin = self.margin
 
         seg = 1.0 - seg # Flip background and foreground
 
         times = np.random.randint(self.min_times, cur_max_times + 1)
         gen_success = []
         # print(times)
-        for i in range(times):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-                    
-
-                bbox_min_size = bbox_max_size/2
-                print(f"bbox min size: {bbox_min_size}")
-                print(f"bbox max size: {bbox_max_size}")
-                
-            else:
-                bbox_min_size = self.bbox_min_size
-            if bbox_min_size >= bbox_max_size:
+        # make sure bbox_min_size smaller than bbox_max_size
+        if self.bbox_min_size >= bbox_max_size:
+            if bbox_max_size < 10:
+                print("Weird, please check again the path")
                 print(raw_image)
-                print(f"min: {bbox_min_size}")
-                print(f"max: {bbox_max_size}")
+                
+
+            bbox_min_size = bbox_max_size/2
+            print(f"bbox min size: {bbox_min_size}")
+            print(f"bbox max size: {bbox_max_size}")
+            
+        else:
+            bbox_min_size = self.bbox_min_size
+        if bbox_min_size >= bbox_max_size:
+            print(raw_image)
+            print(f"min: {bbox_min_size}")
+            print(f"max: {bbox_max_size}")
+        for i in range(times):
+            
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
 
@@ -455,25 +449,58 @@ class RandomRectangleMaskWithSegmOverlapGenerator:
         if len(gen_success) == 0:
             gen_success.append(False)
         if np.all(~np.asarray(gen_success)):
-            if self.bbox_min_size >= bbox_max_size:
-                if bbox_max_size < 10:
-                    print("Weird, please check again the path")
-                    print(raw_image)
-
-                bbox_min_size = bbox_max_size/2
-                print(f"bbox min size: {bbox_min_size}")
-                print(f"bbox max size: {bbox_max_size}")
-                
-            else:
-                bbox_min_size = self.bbox_min_size
-            if bbox_min_size >= bbox_max_size:
-                print(raw_image)
-                print(f"min: {bbox_min_size}")
-                print(f"max: {bbox_max_size}")
             box_width = np.random.randint(bbox_min_size, bbox_max_size)
             box_height = np.random.randint(bbox_min_size, bbox_max_size)
-            start_x = np.random.randint(self.margin, width - self.margin - box_width + 1)
-            start_y = np.random.randint(self.margin, height - self.margin - box_height + 1)
+            start_x = np.random.randint(w_margin, width - w_margin - box_width + 1)
+            start_y = np.random.randint(h_margin, height - h_margin - box_height + 1)
             mask[start_y:start_y + box_height, start_x:start_x + box_width] = 1
 
         return mask[None, ...], np.any(np.asarray(gen_success))
+
+
+class RandomRectangleMaskGenerator:
+    def __init__(self, margin=5, bbox_min_size=30, bbox_max_size=100, min_times=0, max_times=3):
+        self.margin = margin
+        self.bbox_min_size = bbox_min_size
+        self.bbox_max_size = bbox_max_size
+        self.min_times = min_times
+        self.max_times = max_times
+
+    def __call__(self, image, raw_image):
+        if image.ndim == 3:
+            height, width = image.shape[:2]
+        elif image.ndim == 2:
+            height, width = image.shape
+        else:
+            raise ValueError("Input image must be 2D (grayscale) or 3D (color) NumPy array.")
+
+        mask = np.zeros((height, width), dtype=np.float32)
+
+        max_size_y = height - 2 * self.margin
+        max_size_x = width - 2 * self.margin
+        safe_max_size = max(1, min(self.bbox_max_size, max_size_y, max_size_x))
+
+        safe_min_size = min(self.bbox_min_size, safe_max_size)
+        if safe_min_size < 1:
+            safe_min_size = 1
+
+        times = np.random.randint(self.min_times, self.max_times + 1)
+
+        for _ in range(times):
+            if safe_min_size >= safe_max_size:
+                box_width = box_height = safe_max_size
+            else:
+                box_width = np.random.randint(safe_min_size, safe_max_size + 1)
+                box_height = np.random.randint(safe_min_size, safe_max_size + 1)
+
+            range_x = width - 2 * self.margin - box_width
+            range_y = height - 2 * self.margin - box_height
+            if range_x < 0 or range_y < 0:
+                continue  # Box doesn't fit
+
+            start_x = np.random.randint(self.margin, self.margin + range_x + 1)
+            start_y = np.random.randint(self.margin, self.margin + range_y + 1)
+
+            mask[start_y:start_y + box_height, start_x:start_x + box_width] = 1.0
+
+        return mask[None, ...]  # Add channel dimension
